@@ -12,8 +12,131 @@ HEIGHT = 500
 # CV color option
 READ_COLOR = 1
 TRAN_COLOR = cv2.COLOR_BGR2RGB # cv2.COLOR_BGR2GRAY
+
+MAX_SHAPES = 3
+#%% Data Agumetation Functions
+def add_lines(image):
+    imshape = image.shape
+    slant_extreme = 10
+    slant= np.random.randint(-slant_extreme,slant_extreme) 
+    drop_length = 20
+    drop_width = 2
+    drop_color = (200,200,200) 
+    line_drops = random_lines(imshape,slant,drop_length)
+    for line_drop in line_drops:
+        cv2.line(image,(line_drop[0],line_drop[1]),(line_drop[0]+slant,line_drop[1]+drop_length),drop_color,drop_width)
+    return image
+
+def random_lines(imshape,slant,drop_length):
+    drops=[]
+    for i in range(1500): 
+        if slant<0:
+            x= np.random.randint(slant,imshape[1])
+        else:
+            x= np.random.randint(0,imshape[1]-slant)
+            y= np.random.randint(0,imshape[0]-drop_length)
+            drops.append((x,y))
+    return drops
+
+def generate_shadow_coordinates(imshape, no_of_shadows=1):
+    vertices_list=[]
+    for index in range(no_of_shadows):
+        vertex=[]
+        for dimensions in range(np.random.randint(3,15)): ## Dimensionality of the shadow polygon
+            vertex.append(( imshape[1]*np.random.uniform(),imshape[0]//3+imshape[0]*np.random.uniform()))
+        vertices = np.array([vertex], dtype=np.int32) ## single shadow vertices 
+        vertices_list.append(vertices)
+    return vertices_list ## List of shadow vertices
+
+
+def add_shadow(image,no_of_shadows=1):
+    image_HLS = cv2.cvtColor(image,cv2.COLOR_RGB2HLS) ## Conversion to HLS
+    mask = np.zeros_like(image) 
+    imshape = image.shape
+    vertices_list= generate_shadow_coordinates(imshape, no_of_shadows) #3 getting list of shadow vertices
+    for vertices in vertices_list: 
+        cv2.fillPoly(mask, vertices, 255) ## adding all shadow polygons on empty mask, single 255 denotes only red channel
+    image_HLS[:,:,1][mask[:,:,0]==255] = image_HLS[:,:,1][mask[:,:,0]==255]*0.5   ## if red channel is hot, image's "Lightness" channel's brightness is lowered 
+    image_RGB = cv2.cvtColor(image_HLS,cv2.COLOR_HLS2RGB) ## Conversion to RGB
+    return image_RGB
+
+def add_noise(image):  
+    rand_n = image.copy()
+    mean = np.random.randint(0, 1, 3)
+    std = np.random.randint(0, 50, 3)
+    cv2.randn(rand_n, mean, std)
+    image += rand_n
+    return image
+
+def add_blur(image):
+    rand_n = image.copy()
+    blurImg = cv2.blur(rand_n,(10,10))
+    return blurImg
+
+def add_inv(image):
+    rand_n = image.copy()
+    invImg = cv2.bitwise_not(rand_n)
+    return invImg
+
+def add_light_color(image, gamma=1.0):
+    color = np.random.randint(0, 200)
+    invGamma = 1.0 / gamma
+    image = (color - image)
+    table = np.array([((i / 255.0) ** invGamma) * 255
+                      for i in np.arange(0, 256)]).astype("uint8")
+    image=cv2.LUT(image, table)
+    return image
+
+def hue_image(image):
+    saturation = np.random.randint(0, 200)
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+    v = image[:, :, 2]
+    v = np.where(v <= 255 + saturation, v - saturation, 255)
+    image[:, :, 2] = v
+    image = cv2.cvtColor(image, cv2.COLOR_HSV2BGR)
+    return image
+
+def image_laplacian(image):
+    ddepth = cv2.CV_16S
+    kernel_size=np.random.randint(0, 100)
+    src_gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    dst = cv2.Laplacian(src_gray, ddepth, kernel_size)
+    abs_dst = cv2.convertScaleAbs(dst)
+    return abs_dst
+
+
+def draw_rectangles(image):
+    line_type = cv2.LINE_AA
+    number = np.random.randint(0, MAX_SHAPES)
+    for i in range(number):
+        rand_color = tuple(np.random.randint(0, 256, 3))
+        pt1 = (np.random.randint(0, WIDTH + 1), np.random.randint(0, HEIGHT + 1))
+        pt2 = (np.random.randint(0, WIDTH + 1), np.random.randint(0, HEIGHT + 1))
+        cv2.rectangle(image, pt1, pt2,rand_color,-1,line_type,0)
+    return image
+
+def draw_elipses(image):
+    line_type = cv2.LINE_AA
+    number = np.random.randint(0, MAX_SHAPES)
+    for i in range(number):
+        rand_color = tuple(np.random.randint(0, 256, 3))
+        pt1 = (np.random.randint(0, WIDTH + 1), np.random.randint(0, HEIGHT + 1))
+        sz =  (np.random.randint(0, 200), np.random.randint(0, 200))
+        angle = np.random.randint(0, 1000) * 0.180
+        cv2.ellipse(image, pt1, sz, angle, angle - 100, angle + 200,
+                        rand_color, -1,line_type, 0)
+    return image
+
+def draw_circles(image):
+    line_type = cv2.LINE_AA
+    number = np.random.randint(0, MAX_SHAPES)
+    for i in range(number):
+        rand_color = tuple(np.random.randint(0, 256, 3))
+        pt1 =  (np.random.randint(0, WIDTH + 1), np.random.randint(0, HEIGHT + 1))
+        cv2.circle(image, pt1, np.random.randint(30, 50), rand_color, -1,line_type, 0)
+    return image
 #%%
-def randomSample(image):
+def randomSample(image, thr=.5):
     
     # Random canvas
     rand_color = tuple(np.random.randint(0, 256, 3))
@@ -45,23 +168,37 @@ def randomSample(image):
     new = cv2.warpAffine(new, M, (w, h), borderMode=cv2.BORDER_CONSTANT, borderValue=rand_color)
     #new = new.astype(np.float)
     
-    """
-    poner alguna figura random...
-    rand_color_2 = tuple(np.random.randint(0, 256, 3))
-    rand_pos = (np.random.randint(0, HEIGHT + 1), np.random.randint(0, WIDTH + 1))
-    rand_rad = np.random.randint(0, 100)
-    cv2.circle(new, rand_pos, rand_rad, rand_color_2, -1)
-    """
+    # Lines
+    if np.random.uniform(0, 1) <= thr: new = add_lines(new)
+    
+    # Rectangles
+    if np.random.uniform(0, 1) <= thr: new = draw_rectangles(new)
+    
+    # Elipses
+    if np.random.uniform(0, 1) <= thr: new = draw_elipses(new)
+    
+    # Circles
+    if np.random.uniform(0, 1) <= thr: new = draw_circles(new)
     
     # Noise
-    rand_n = new.copy()
-    mean = np.random.randint(0, 1, 3)
-    std = np.random.randint(0, 50, 3)
-    cv2.randn(rand_n, tuple(mean), tuple(std))
-    new += rand_n
+    if np.random.uniform(0, 1) <= thr: new = add_noise(new)
+	
+    # Blur
+    if np.random.uniform(0, 1) <= thr: new = add_blur(new)
+		
+	# Inversion
+    if np.random.uniform(0, 1) <= thr: new = add_inv(new)
+		
+	# Light
+    if np.random.uniform(0, 1) <= thr: new = add_light_color(new)
+		
+	# Hue
+    if np.random.uniform(0, 1) <= thr: new = hue_image(new)
+		
+	# Laplacian
+    if np.random.uniform(0, 1) <= thr: new = image_laplacian(new)
     
     return new 
-    
 #%% LOAD Banknotes
 a1k = cv2.cvtColor(cv2.imread(DIR_BASE + "1000/anverso.jpg", READ_COLOR), TRAN_COLOR)
 a2k = cv2.cvtColor(cv2.imread(DIR_BASE + "2000/anverso.jpg", READ_COLOR), TRAN_COLOR)
@@ -76,7 +213,7 @@ r10k = cv2.cvtColor(cv2.imread(DIR_BASE + "10000/reverso.jpg", READ_COLOR), TRAN
 r20k = cv2.cvtColor(cv2.imread(DIR_BASE + "20000/reverso.jpg", READ_COLOR), TRAN_COLOR)
 #%%
 for i in range(10):
-    rs = randomSample(a10k)
+    rs = randomSample(a20k, .1)
     plt.imshow(rs)
     plt.show()
 
