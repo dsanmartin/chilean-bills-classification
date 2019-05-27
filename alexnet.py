@@ -1,6 +1,7 @@
 # Import necessary components to build LeNet
 from keras import losses
 from keras.models import Sequential
+from keras.utils import np_utils
 from keras.layers.core import Dense, Dropout, Activation, Flatten
 from keras.layers.convolutional import Conv2D, MaxPooling2D, ZeroPadding2D
 from keras.layers.normalization import BatchNormalization
@@ -107,6 +108,8 @@ X, y = createDataset(data_anv, data_rev, pa, th, bc)
 #%%
 X_tr, X_test, y_tr, y_test = train_test_split(X, y, test_size=0.2, random_state=seed)
 X_train, X_val, y_train, y_val = train_test_split(X_tr, y_tr, test_size=0.2, random_state=seed)
+y_train = np_utils.to_categorical(y_train)
+y_val = np_utils.to_categorical(y_val)
 #%%
 lr_ = .5
 epochs_ = 50
