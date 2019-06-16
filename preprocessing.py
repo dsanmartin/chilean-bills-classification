@@ -6,8 +6,10 @@ import matplotlib.pyplot as plt
 DIR_BASE = "data/"
 
 # Define canvas size 
-WIDTH = 500
-HEIGHT = 500
+WIDTH = 150
+HEIGHT = 150
+
+CHANNEL = 1
 
 # CV color option
 READ_COLOR = 1
@@ -144,13 +146,14 @@ def randomSample(image, thr=.5):
     canvas[:] = rand_color
     
     # Resize image
-    res = cv2.resize(image, None,fx=.5, fy=.5, interpolation=cv2.INTER_CUBIC)
+    res = cv2.resize(image, None,fx=.15, fy=.15, interpolation=cv2.INTER_CUBIC)
     
     # Random position
-    x_offset = np.random.randint(0, 100)
-    y_offset = np.random.randint(0, 100)
+    x_offset = np.random.randint(0, 10)#res.shape[1])
+    y_offset = np.random.randint(0, 10)#res.shape[0])
     
     new = np.copy(canvas)
+    
     new[y_offset:y_offset+res.shape[0], x_offset:x_offset+res.shape[1]] = res
     
     # Image size
@@ -212,41 +215,45 @@ r5k = cv2.cvtColor(cv2.imread(DIR_BASE + "5000/reverso.jpg", READ_COLOR), TRAN_C
 r10k = cv2.cvtColor(cv2.imread(DIR_BASE + "10000/reverso.jpg", READ_COLOR), TRAN_COLOR)
 r20k = cv2.cvtColor(cv2.imread(DIR_BASE + "20000/reverso.jpg", READ_COLOR), TRAN_COLOR)
 #%%
-for i in range(10):
-    rs = randomSample(a20k, .1)
-    print(rs.shape)
-    plt.imshow(rs)
-    plt.show()
+#for i in range(10):
+#    rs = randomSample(a20k, .1)
+#    print(rs.shape)
+#    plt.imshow(rs)
+#    plt.show()
 
 #%%
-def createDataset(data_anv, data_rev, prop_anv, threshold, bills_per_class):
+def createDataset(data_anv, data_rev, prop_anv, threshold, bills_per_class, height, width, grayscale=False):
     N = sum(bills_per_class)
-    X = np.zeros((N, HEIGHT, WIDTH, 3), np.uint8)
+    if grayscale:
+        X = np.zeros((N, height, width, 1))
+    else:
+        X = np.zeros((N, height, width, 3), np.uint8)
     y = np.zeros(N, dtype=int)
     n = 0
     for i in range(len(bills_per_class)):
         n_anv = int(prop_anv[i] * bills_per_class[i])
         n_rev = (bills_per_class[i] - n_anv)
         for a in range(n_anv):
-            X[n] = randomSample(data_anv[i], threshold[i])
+            if grayscale: 
+                tmp = randomSample(data_anv[i], threshold[i]) 
+                X[n] = (tmp[:,:,0] * 0.299 + tmp[:,:,1] * 0.587 + tmp[:,:,2] * 0.114).reshape(height, width, 1) #np.dot(X[n,:3], [0.299, 0.587, 0.114])
+            else:
+                X[n] = randomSample(data_anv[i], threshold[i])
             y[n] = i
             n += 1
         for r in range(n_rev):
-            X[n] = randomSample(data_rev[i], threshold[i])
+            if grayscale: 
+                tmp = randomSample(data_rev[i], threshold[i]) 
+                X[n] = (tmp[:,:,0] * 0.299 + tmp[:,:,1] * 0.587 + tmp[:,:,2] * 0.114).reshape(height, width, 1)
+            else:
+                X[n] = randomSample(data_rev[i], threshold[i])
             y[n] = i
             n += 1
     return X, y
-#%%
-pa = [.5, .3, .4, .3, .1] # Proporcion Anversos
-th = [0] * 5 # Umbrales
-bc = [100, 200, 100, 30, 20] # Numero de billetes por clase
-data_anv = [a1k, a2k, a5k, a10k, a20k]
-data_rev = [r1k, r2k, r5k, r10k, r20k]
-X, y = createDataset(data_anv, data_rev, pa, th, bc)
-#%% SHOW DATA
-#from sklearn.utils import shuffle
-#X, y = shuffle(X, y, random_state=0)
-#pos = -1
-#plt.imshow(X[pos])
-#plt.show()
-#print(y[pos])
+#%% TEST
+#pa = [.5, .3, .4, .3, .1] # Proporcion Anversos
+#th = [0] * 5 # Umbrales
+#bc = [10] * 5 # Numero de billetes por clase
+#data_anv = [a1k, a2k, a5k, a10k, a20k]
+#data_rev = [r1k, r2k, r5k, r10k, r20k]
+#X, y = createDataset(data_anv, data_rev, pa, th, bc, HEIGHT, WIDTH, True)
