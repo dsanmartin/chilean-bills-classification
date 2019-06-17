@@ -72,7 +72,7 @@ def plot_confusion_matrix(y_true, y_pred, classes,
     return ax
 
 #%% Show loss function
-with open('history_bk.json') as json_file:
+with open('history.json') as json_file:
     data = json.load(json_file)
     loss = np.array(data['loss'])
     val_loss = np.array(data['val_loss'])
