@@ -1,24 +1,21 @@
+import os
+os.environ["CUDA_VISIBLE_DEVICES"]="-1"
+import json
 import numpy as np
 import matplotlib.pyplot as plt
 from keras.models import load_model
-#%%
-#history = np.array([1.9217076301574707, 1.6614644527435303, 1.658648058772087, 1.5037682801485062, 1.4885833710432053, 1.5394011437892914, 1.516641989350319, 1.4970482289791107, 1.4865447729825974, 1.4755478352308273]) 
-#val_loss = np.array([9.288053512573242, 2.060764789581299, 2.106947422027588, 1.7529735565185547, 1.5461255311965942, 1.5523161888122559, 1.4646443128585815, 1.4526764154434204, 1.4493248462677002, 1.4392611980438232])
-#plt.plot(history)
-#plt.show()
-#%%
-X_test = np.load('X_test.npy')
-y_test = np.load('y_test.npy')
-model = load_model('my_model.h5')
-#%%
-pred = model.predict(X_test)
-#%%
-pred_ = np.argmax(pred, axis=1, out=None)
-y_ = np.argmax(y_test, axis=1, out=None)
-
-#%%
 from sklearn.metrics import accuracy_score, f1_score, confusion_matrix
 from sklearn.utils.multiclass import unique_labels
+#%%
+def plotLoss(loss, val_loss):
+    plt.plot(np.arange(len(loss)), loss, 'b-*', label='Loss')
+    plt.plot(np.arange(len(val_loss)), val_loss, 'r-x', label='Val Loss')
+    plt.xlabel('Epochs')
+    plt.ylabel('Loss')
+    plt.grid(True)
+    plt.legend()
+    plt.show()
+    return None
 
 def plot_confusion_matrix(y_true, y_pred, classes,
                           normalize=False,
@@ -71,11 +68,25 @@ def plot_confusion_matrix(y_true, y_pred, classes,
                     ha="center", va="center",
                     color="white" if cm[i, j] > thresh else "black")
     fig.tight_layout()
+    plt.show()
     return ax
+
+#%% Show loss function
+with open('history_bk.json') as json_file:
+    data = json.load(json_file)
+    loss = np.array(data['loss'])
+    val_loss = np.array(data['val_loss'])
+plotLoss(loss, val_loss)
 #%%
-#cm = confusion_matrix(y_, pred_)
-print(accuracy_score(y_, pred_))
-print(f1_score(y_, pred_, average='macro'))
-#plt.imshow(cm)
-#plt.show()
-plot_confusion_matrix(y_, pred_, np.arange(5))
+X_test = np.load('X_test.npy')
+y_test = np.load('y_test.npy')
+model = load_model('model.h5')
+#%%
+pred = model.predict(X_test)
+#%%
+y_pred = np.argmax(pred, axis=1, out=None)
+y_real = np.argmax(y_test, axis=1, out=None)
+#%%
+print(accuracy_score(y_real, y_pred))
+print(f1_score(y_real, y_pred, average='macro'))
+plot_confusion_matrix(y_real, y_pred, np.arange(5))

@@ -14,7 +14,6 @@ from keras.regularizers import l2
 from keras.optimizers import SGD
 from preprocessing import createDataset
 from sklearn.model_selection import train_test_split
-
 #%%
 DIR_BASE = "data/"
 # Define canvas size 
@@ -101,17 +100,17 @@ r2k = cv2.cvtColor(cv2.imread(DIR_BASE + "2000/reverso.jpg", READ_COLOR), TRAN_C
 r5k = cv2.cvtColor(cv2.imread(DIR_BASE + "5000/reverso.jpg", READ_COLOR), TRAN_COLOR)
 r10k = cv2.cvtColor(cv2.imread(DIR_BASE + "10000/reverso.jpg", READ_COLOR), TRAN_COLOR)
 r20k = cv2.cvtColor(cv2.imread(DIR_BASE + "20000/reverso.jpg", READ_COLOR), TRAN_COLOR)
-    
 #%%
 pa = [.5] * 5 # Proporcion Anversos
 th = [0] * 5 # Umbrales
-bc = [50] * 5 # Numero de billetes por clase
+bc = [100] * 5 # Numero de billetes por clase
 data_anv = [a1k, a2k, a5k, a10k, a20k]
 data_rev = [r1k, r2k, r5k, r10k, r20k]
 X, y = createDataset(data_anv, data_rev, pa, th, bc, HEIGHT, WIDTH, True)
 #%%
-X_tr, X_test, y_tr, y_test = train_test_split(X, y, test_size=0.2, random_state=seed)
-X_train, X_val, y_train, y_val = train_test_split(X_tr, y_tr, test_size=0.2, random_state=seed)
+X_tr, X_test, y_tr, y_test = train_test_split(X, y, test_size=0.33, random_state=seed, stratify=y)
+X_train, X_val, y_train, y_val = train_test_split(X_tr, y_tr, test_size=0.33, random_state=seed, stratify=y_tr)
+#%%
 y_train = np_utils.to_categorical(y_train)
 y_test = np_utils.to_categorical(y_test)
 y_val = np_utils.to_categorical(y_val)
@@ -122,8 +121,8 @@ np.save('y_test', y_test)
 del X, data_anv, data_rev, a1k, a2k, a5k, a10k, a20k, r1k, r2k, r5k, r10k, r20k
 #%%
 lr_ = .5
-epochs_ = 10
-batch_size_ = 100
+epochs_ = 100
+batch_size_ = 50
 sgd = SGD(lr=lr_)
 alexnet = alexnet_model(img_shape=X_train[0].shape)
 alexnet.compile(optimizer=sgd, loss=losses.categorical_crossentropy)
