@@ -12,7 +12,7 @@ from keras.layers.convolutional import Conv2D, MaxPooling2D, ZeroPadding2D
 from keras.layers.normalization import BatchNormalization
 from keras.regularizers import l2
 from keras.optimizers import SGD
-from preprocessing import createDataset
+#from preprocessing import createDataset
 from sklearn.model_selection import train_test_split
 #%%
 DIR_BASE = "data/"
@@ -101,12 +101,16 @@ r5k = cv2.cvtColor(cv2.imread(DIR_BASE + "5000/reverso.jpg", READ_COLOR), TRAN_C
 r10k = cv2.cvtColor(cv2.imread(DIR_BASE + "10000/reverso.jpg", READ_COLOR), TRAN_COLOR)
 r20k = cv2.cvtColor(cv2.imread(DIR_BASE + "20000/reverso.jpg", READ_COLOR), TRAN_COLOR)
 #%%
-pa = [.5] * 5 # Proporcion Anversos
-th = [0] * 5 # Umbrales
-bc = [100] * 5 # Numero de billetes por clase
-data_anv = [a1k, a2k, a5k, a10k, a20k]
-data_rev = [r1k, r2k, r5k, r10k, r20k]
-X, y = createDataset(data_anv, data_rev, pa, th, bc, HEIGHT, WIDTH, True)
+#pa = [.5] * 5 # Proporcion Anversos
+#th = [0] * 5 # Umbrales
+#bc = [500] * 5 # Numero de billetes por clase
+#data_anv = [a1k, a2k, a5k, a10k, a20k]
+#data_rev = [r1k, r2k, r5k, r10k, r20k]
+#X, y = createDataset(data_anv, data_rev, pa, th, bc, HEIGHT, WIDTH, True)
+#np.save('data/input/X', X)
+#np.save('data/input/y', y)
+X = np.load('data/input/X.npy')
+y = np.load('data/input/y.npy')
 #%%
 X_tr, X_test, y_tr, y_test = train_test_split(X, y, test_size=0.33, random_state=seed, stratify=y)
 X_train, X_val, y_train, y_val = train_test_split(X_tr, y_tr, test_size=0.33, random_state=seed, stratify=y_tr)
