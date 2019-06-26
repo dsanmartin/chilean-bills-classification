@@ -21,6 +21,7 @@ from sklearn.model_selection import train_test_split
 #Model and X and y test directory
 folder = datetime.today().strftime('%Y%m%d%H%M%S')
 pathlib.Path('data/output/models/' + str(folder)).mkdir(parents=True, exist_ok=True)
+pathlib.Path('data/input').mkdir(parents=True, exist_ok=True)
 
 DIR_BASE = "data/"
 # Define canvas size 
