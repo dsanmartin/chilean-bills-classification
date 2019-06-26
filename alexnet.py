@@ -14,13 +14,9 @@ from keras.regularizers import l2
 from keras.optimizers import SGD
 from datetime import datetime
 import pathlib
-#from preprocessing import createDataset
+from preprocessing import createDataset
 from sklearn.model_selection import train_test_split
 #%%
-
-#Model and X and y test directory
-folder = datetime.today().strftime('%Y%m%d%H%M%S')
-pathlib.Path('data/output/models/' + str(folder)).mkdir(parents=True, exist_ok=True)
 pathlib.Path('data/input').mkdir(parents=True, exist_ok=True)
 
 DIR_BASE = "data/"
@@ -127,6 +123,10 @@ y_train = np_utils.to_categorical(y_train)
 y_test = np_utils.to_categorical(y_test)
 y_val = np_utils.to_categorical(y_val)
 #%%
+#Model and X and y test directory
+folder = datetime.today().strftime('%Y%m%d%H%M%S')
+pathlib.Path('data/output/models/' + str(folder)).mkdir(parents=True, exist_ok=True)
+
 np.save('data/output/models/' + str(folder) + '/X_test', X_test)
 np.save('data/output/models/' + str(folder) + '/y_test', y_test)
 #%%
