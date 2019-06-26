@@ -68,19 +68,24 @@ def plot_confusion_matrix(y_true, y_pred, classes,
                     ha="center", va="center",
                     color="white" if cm[i, j] > thresh else "black")
     fig.tight_layout()
-    plt.show()
+    plt.show() 
     return ax
 
 #%% Show loss function
-with open('history.json') as json_file:
+    
+#Console variable
+import sys
+print (sys.argv [1])
+
+with open('data/output/models/' + sys.argv [1] + '/history.json') as json_file:
     data = json.load(json_file)
     loss = np.array(data['loss'])
     val_loss = np.array(data['val_loss'])
 plotLoss(loss, val_loss)
 #%%
-X_test = np.load('X_test.npy')
-y_test = np.load('y_test.npy')
-model = load_model('model.h5')
+X_test = np.load('data/output/models/' + sys.argv [1] + '/X_test.npy')
+y_test = np.load('data/output/models/'+ sys.argv [1] + '/y_test.npy')
+model = load_model('data/output/models/' + sys.argv [1] + '/model.h5')
 #%%
 pred = model.predict(X_test)
 #%%

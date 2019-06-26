@@ -111,37 +111,37 @@ def draw_rectangles(image):
     line_type = cv2.LINE_AA
     number = np.random.randint(0, MAX_SHAPES)
     for i in range(number):
-        rand_color = tuple(np.random.randint(0, 256, 3))
+        rand_color = np.random.randint(0, 256, 3)
         pt1 = (np.random.randint(0, WIDTH + 1), np.random.randint(0, HEIGHT + 1))
         pt2 = (np.random.randint(0, WIDTH + 1), np.random.randint(0, HEIGHT + 1))
-        cv2.rectangle(image, pt1, pt2,rand_color,-1,line_type,0)
+        cv2.rectangle(image, pt1, pt2,rand_color.tolist(),-1,line_type,0)
     return image
 
 def draw_elipses(image):
     line_type = cv2.LINE_AA
     number = np.random.randint(0, MAX_SHAPES)
     for i in range(number):
-        rand_color = tuple(np.random.randint(0, 256, 3))
+        rand_color = np.random.randint(0, 256, 3)
         pt1 = (np.random.randint(0, WIDTH + 1), np.random.randint(0, HEIGHT + 1))
-        sz =  (np.random.randint(0, 200), np.random.randint(0, 200))
+        sz =  (np.random.randint(0, 150), np.random.randint(0, 150))
         angle = np.random.randint(0, 1000) * 0.180
         cv2.ellipse(image, pt1, sz, angle, angle - 100, angle + 200,
-                        rand_color, -1,line_type, 0)
+                        rand_color.tolist(), -1,line_type, 0)
     return image
 
 def draw_circles(image):
     line_type = cv2.LINE_AA
     number = np.random.randint(0, MAX_SHAPES)
     for i in range(number):
-        rand_color = tuple(np.random.randint(0, 256, 3))
+        rand_color = np.random.randint(0, 256, 3)
         pt1 =  (np.random.randint(0, WIDTH + 1), np.random.randint(0, HEIGHT + 1))
-        cv2.circle(image, pt1, np.random.randint(30, 50), rand_color, -1,line_type, 0)
+        cv2.circle(image, pt1, np.random.randint(30, 50), rand_color.tolist(), -1,line_type, 0)
     return image
 #%%
 def randomSample(image, thr=.5):
     
     # Random canvas
-    rand_color = tuple(np.random.randint(0, 256, 3))
+    rand_color = np.random.randint(0, 256, 3)
     canvas = np.zeros((HEIGHT, WIDTH, 3), np.uint8)
     canvas[:] = rand_color
     
@@ -168,11 +168,11 @@ def randomSample(image, thr=.5):
     M = cv2.getRotationMatrix2D(center, angle, scale)
     
     # New random sample
-    new = cv2.warpAffine(new, M, (w, h), borderMode=cv2.BORDER_CONSTANT, borderValue=rand_color)
+    new = cv2.warpAffine(new, M, (w, h), borderMode=cv2.BORDER_CONSTANT, borderValue=rand_color.tolist())
     #new = new.astype(np.float)
     
     # Lines
-    if np.random.uniform(0, 1) <= thr: new = add_lines(new)
+    #if np.random.uniform(0, 1) <= thr: new = add_lines(new)
     
     # Rectangles
     if np.random.uniform(0, 1) <= thr: new = draw_rectangles(new)
@@ -196,10 +196,10 @@ def randomSample(image, thr=.5):
     if np.random.uniform(0, 1) <= thr: new = add_light_color(new)
 		
 	# Hue
-    if np.random.uniform(0, 1) <= thr: new = hue_image(new)
+    #if np.random.uniform(0, 1) <= thr: new = hue_image(new)
 		
 	# Laplacian
-    if np.random.uniform(0, 1) <= thr: new = image_laplacian(new)
+    #if np.random.uniform(0, 1) <= thr: new = image_laplacian(new)
     
     return new 
 #%% LOAD Banknotes
@@ -216,7 +216,7 @@ r10k = cv2.cvtColor(cv2.imread(DIR_BASE + "10000/reverso.jpg", READ_COLOR), TRAN
 r20k = cv2.cvtColor(cv2.imread(DIR_BASE + "20000/reverso.jpg", READ_COLOR), TRAN_COLOR)
 #%%
 #for i in range(10):
-#    rs = randomSample(a20k, .1)
+#    rs = randomSample(a20k, .5)
 #    print(rs.shape)
 #    plt.imshow(rs)
 #    plt.show()
@@ -235,10 +235,11 @@ def createDataset(data_anv, data_rev, prop_anv, threshold, bills_per_class, heig
         n_rev = (bills_per_class[i] - n_anv)
         for a in range(n_anv):
             if grayscale: 
-                tmp = randomSample(data_anv[i], threshold[i]) 
+                tmp = randomSample(data_anv[i], threshold[i])
                 X[n] = (tmp[:,:,0] * 0.299 + tmp[:,:,1] * 0.587 + tmp[:,:,2] * 0.114).reshape(height, width, 1) #np.dot(X[n,:3], [0.299, 0.587, 0.114])
             else:
                 X[n] = randomSample(data_anv[i], threshold[i])
+                plt.imshow(X[n])
             y[n] = i
             n += 1
         for r in range(n_rev):
@@ -247,6 +248,7 @@ def createDataset(data_anv, data_rev, prop_anv, threshold, bills_per_class, heig
                 X[n] = (tmp[:,:,0] * 0.299 + tmp[:,:,1] * 0.587 + tmp[:,:,2] * 0.114).reshape(height, width, 1)
             else:
                 X[n] = randomSample(data_rev[i], threshold[i])
+                plt.imshow(X[n])
             y[n] = i
             n += 1
     return X, y
