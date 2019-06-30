@@ -1,11 +1,15 @@
 import os
 os.environ["CUDA_VISIBLE_DEVICES"]="-1"
 import json
+import sys
 import numpy as np
 import matplotlib.pyplot as plt
 from keras.models import load_model
 from sklearn.metrics import accuracy_score, f1_score, confusion_matrix
 from sklearn.utils.multiclass import unique_labels
+
+BASE_DIR = 'data/output/experiments/' + sys.argv [1]
+
 #%%
 def plotLoss(loss, val_loss):
     plt.plot(np.arange(len(loss)), loss, 'b-*', label='Loss')
@@ -72,20 +76,16 @@ def plot_confusion_matrix(y_true, y_pred, classes,
     return ax
 
 #%% Show loss function
-    
-#Console variable
-import sys
-print (sys.argv [1])
 
-with open('data/output/models/' + sys.argv [1] + '/history.json') as json_file:
+with open(BASE_DIR + '/history.json') as json_file:
     data = json.load(json_file)
     loss = np.array(data['loss'])
     val_loss = np.array(data['val_loss'])
 plotLoss(loss, val_loss)
 #%%
-X_test = np.load('data/output/models/' + sys.argv [1] + '/X_test.npy')
-y_test = np.load('data/output/models/'+ sys.argv [1] + '/y_test.npy')
-model = load_model('data/output/models/' + sys.argv [1] + '/model.h5')
+X_test = np.load(BASE_DIR + '/X_test.npy')
+y_test = np.load(BASE_DIR + '/y_test.npy')
+model = load_model(BASE_DIR  + '/model.h5')
 #%%
 pred = model.predict(X_test)
 #%%

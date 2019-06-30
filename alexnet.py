@@ -13,13 +13,18 @@ from keras.layers.normalization import BatchNormalization
 from keras.regularizers import l2
 from keras.optimizers import SGD
 from datetime import datetime
-import pathlib
+import pathlib2 as pathlib
 from preprocessing import createDataset
 from sklearn.model_selection import train_test_split
 #%%
-pathlib.Path('data/input').mkdir(parents=True, exist_ok=True)
-
+folder = datetime.today().strftime('%Y%m%d%H%M%S')
 DIR_BASE = "data/"
+DIR_IN = DIR_BASE + "input/"
+DIR_OUT = DIR_BASE + "output/experiments/" + folder + "/" 
+
+pathlib.Path(DIR_OUT).mkdir(parents=True, exist_ok=True)
+pathlib.Path(DIR_IN + 'arrays/' + folder + '/').mkdir(parents=True, exist_ok=True)
+
 # Define canvas size 
 WIDTH = 150
 HEIGHT = 150
@@ -93,17 +98,17 @@ def alexnet_model(img_shape=(HEIGHT, WIDTH, 1), n_classes=5, l2_reg=0.,
 	return alexnet
 
 #%% LOAD DATA
-a1k = cv2.cvtColor(cv2.imread(DIR_BASE + "1000/anverso.jpg", READ_COLOR), TRAN_COLOR)
-a2k = cv2.cvtColor(cv2.imread(DIR_BASE + "2000/anverso.jpg", READ_COLOR), TRAN_COLOR)
-a5k = cv2.cvtColor(cv2.imread(DIR_BASE + "5000/anverso.jpg", READ_COLOR), TRAN_COLOR)
-a10k = cv2.cvtColor(cv2.imread(DIR_BASE + "10000/anverso.jpg", READ_COLOR), TRAN_COLOR)
-a20k = cv2.cvtColor(cv2.imread(DIR_BASE + "20000/anverso.jpg", READ_COLOR), TRAN_COLOR)
+a1k = cv2.cvtColor(cv2.imread(DIR_IN + "bills/1000/anverso.jpg", READ_COLOR), TRAN_COLOR)
+a2k = cv2.cvtColor(cv2.imread(DIR_IN + "bills/2000/anverso.jpg", READ_COLOR), TRAN_COLOR)
+a5k = cv2.cvtColor(cv2.imread(DIR_IN + "bills/5000/anverso.jpg", READ_COLOR), TRAN_COLOR)
+a10k = cv2.cvtColor(cv2.imread(DIR_IN + "bills/10000/anverso.jpg", READ_COLOR), TRAN_COLOR)
+a20k = cv2.cvtColor(cv2.imread(DIR_IN + "bills/20000/anverso.jpg", READ_COLOR), TRAN_COLOR)
 
-r1k = cv2.cvtColor(cv2.imread(DIR_BASE + "1000/reverso.jpg", READ_COLOR), TRAN_COLOR)
-r2k = cv2.cvtColor(cv2.imread(DIR_BASE + "2000/reverso.jpg", READ_COLOR), TRAN_COLOR)
-r5k = cv2.cvtColor(cv2.imread(DIR_BASE + "5000/reverso.jpg", READ_COLOR), TRAN_COLOR)
-r10k = cv2.cvtColor(cv2.imread(DIR_BASE + "10000/reverso.jpg", READ_COLOR), TRAN_COLOR)
-r20k = cv2.cvtColor(cv2.imread(DIR_BASE + "20000/reverso.jpg", READ_COLOR), TRAN_COLOR)
+r1k = cv2.cvtColor(cv2.imread(DIR_IN + "bills/1000/reverso.jpg", READ_COLOR), TRAN_COLOR)
+r2k = cv2.cvtColor(cv2.imread(DIR_IN + "bills/2000/reverso.jpg", READ_COLOR), TRAN_COLOR)
+r5k = cv2.cvtColor(cv2.imread(DIR_IN + "bills/5000/reverso.jpg", READ_COLOR), TRAN_COLOR)
+r10k = cv2.cvtColor(cv2.imread(DIR_IN + "bills/10000/reverso.jpg", READ_COLOR), TRAN_COLOR)
+r20k = cv2.cvtColor(cv2.imread(DIR_IN + "bills/20000/reverso.jpg", READ_COLOR), TRAN_COLOR)
 #%%
 pa = [.5] * 5 # Proporcion Anversos
 th = [0.5] * 5 # Umbrales
@@ -111,10 +116,10 @@ bc = [5] * 5 # Numero de billetes por clase
 data_anv = [a1k, a2k, a5k, a10k, a20k]
 data_rev = [r1k, r2k, r5k, r10k, r20k]
 X, y = createDataset(data_anv, data_rev, pa, th, bc, HEIGHT, WIDTH)
-np.save('data/input/X', X)
-np.save('data/input/y', y)
-X = np.load('data/input/X.npy')
-y = np.load('data/input/y.npy')
+np.save(DIR_IN + 'arrays/' + folder + '/X', X)
+np.save(DIR_IN + 'arrays/' + folder + '/y', y)
+#X = np.load('data/input/X.npy')
+#y = np.load('data/input/y.npy')
 #%%
 X_tr, X_test, y_tr, y_test = train_test_split(X, y, test_size=0.33, random_state=seed, stratify=y)
 X_train, X_val, y_train, y_val = train_test_split(X_tr, y_tr, test_size=0.33, random_state=seed, stratify=y_tr)
@@ -124,17 +129,15 @@ y_test = np_utils.to_categorical(y_test)
 y_val = np_utils.to_categorical(y_val)
 #%%
 #Model and X and y test directory
-folder = datetime.today().strftime('%Y%m%d%H%M%S')
-pathlib.Path('data/output/models/' + str(folder)).mkdir(parents=True, exist_ok=True)
 
-np.save('data/output/models/' + str(folder) + '/X_test', X_test)
-np.save('data/output/models/' + str(folder) + '/y_test', y_test)
+np.save(DIR_OUT + 'X_test', X_test)
+np.save(DIR_OUT + 'y_test', y_test)
 #%%
 del X, data_anv, data_rev, a1k, a2k, a5k, a10k, a20k, r1k, r2k, r5k, r10k, r20k
 #%%
 lr_ = .5
 epochs_ = 1
-batch_size_ = 50
+batch_size_ = 10
 sgd = SGD(lr=lr_)
 alexnet = alexnet_model(img_shape=X_train[0].shape)
 alexnet.compile(optimizer=sgd, loss=losses.categorical_crossentropy)
@@ -142,6 +145,7 @@ alexnet.compile(optimizer=sgd, loss=losses.categorical_crossentropy)
 hist = alexnet.fit(X_train, y_train, epochs=epochs_, batch_size=batch_size_, verbose=1, 
                  validation_data=(X_val, y_val))
 #%%
-alexnet.save('data/output/models/' + str(folder)+ '/model.h5')
+alexnet.save(DIR_OUT + 'model.h5')
 #%%
-json.dump(hist.history, open('data/output/models/' + str(folder) + '/history.json', 'w'))
+json.dump(hist.history, open(DIR_OUT + 'history.json', 'w'))
+print(folder)

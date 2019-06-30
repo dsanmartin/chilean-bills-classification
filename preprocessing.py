@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 #%% OPTIONS
 # Data directory
-DIR_BASE = "data/"
+DIR_BASE = "data/input/bills/"
 
 # Define canvas size 
 WIDTH = 150
