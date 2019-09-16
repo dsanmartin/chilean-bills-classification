@@ -1,1 +1,1 @@
-# Machine Learning Models for Chilean Banknotes Classification
+# A Deep Learning Model for Chilean Bills Classification
