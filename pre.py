@@ -15,7 +15,7 @@ WIDTH = 150
 HEIGHT = 150
 
 # CV color option
-COLOR = 0
+COLOR = 1
 
 BILLS = ['1000', '2000', '5000', '10000', '20000']
 
@@ -29,15 +29,15 @@ def main():
     
     folder = datetime.today().strftime('%Y%m%d%H%M%S')
     output = ARRAY_DIR + folder + '/'
-    pathlib.Path(output).mkdir(parents=True, exist_ok=True)
+    #pathlib.Path(output).mkdir(parents=True, exist_ok=True)
     
     # Load bills
     data_anv, data_rev = loadBills(BILLS, BILLS_DIR, EXT, args.color)
     
     # Create dataset
     pa = [.5] * 5 # Number of heads
-    th = [.0] * 5 # Threshold
-    bc = [5] * 5 # Number of bills per class
+    th = [.1] * 5 # Threshold
+    bc = [1000] * 5 # Number of bills per class
     X, y = createDataset(data_anv, data_rev, pa, th, bc, args.height, args.width, args.color)
     
     # Save
@@ -45,15 +45,27 @@ def main():
 
     print(folder)
     
+    info = open(output + 'info.txt', 'w')
+    info.write("ID: {0}\n".format(folder))
+    info.write("Width: {0}\n".format(args.width))
+    info.write("Heigth: {0}\n".format(args.height))
+    info.write("Color: {0}\n".format(args.color))
+    info.write("Bills per class: {0}\n".format(", ".join([str(i) for i in bc])))
+    info.write("Heads %: {0}\n".format(", ".join([str(i) for i in pa])))
+    info.write("Thresholds %: {0}".format(", ".join([str(i) for i in th])))
+    info.close()
+    
 
 if __name__ == "__main__":
     main()
     
-##%%
+#%%
 #import numpy as np
 #import matplotlib.pyplot as plt
 #
-#X = np.load('data/input/arrays/20190918011746/X.npy')
+#X = np.load('data/input/arrays/20190918182100/X.npy')
 #
 #print(X.shape)
-#plt.imshow(X[0,:,:,0])
+#for i in range(len(X)):
+#    plt.imshow(X[i])
+#    plt.show()
