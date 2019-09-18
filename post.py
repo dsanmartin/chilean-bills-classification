@@ -1,16 +1,13 @@
 import os
 os.environ["CUDA_VISIBLE_DEVICES"]="-1"
 import json
-import sys
+import argparse
 import numpy as np
 import matplotlib.pyplot as plt
 from keras.models import load_model
 from sklearn.metrics import accuracy_score, f1_score, confusion_matrix
 from sklearn.utils.multiclass import unique_labels
 
-BASE_DIR = 'data/output/experiments/' + sys.argv [1]
-
-#%%
 def plotLoss(loss, val_loss):
     plt.plot(np.arange(len(loss)), loss, 'b-*', label='Loss')
     plt.plot(np.arange(len(val_loss)), val_loss, 'r-x', label='Val Loss')
@@ -75,23 +72,39 @@ def plot_confusion_matrix(y_true, y_pred, classes,
     plt.show() 
     return ax
 
-#%% Show loss function
+def main():
+    
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--dir', '-d', help="Input directory.", type=str, required=True) 
+    args = parser.parse_args()
+        
+    input_dir = args.dir
+    
+    # Show loss function
+    with open(input_dir + '/history.json') as json_file:
+        data = json.load(json_file)
+        loss = np.array(data['loss'])
+        val_loss = np.array(data['val_loss'])
+    plotLoss(loss, val_loss)
+    
+    # Load test data
+    X_test = np.load(input_dir + '/X_test.npy')
+    y_test = np.load(input_dir + '/y_test.npy')
+    
+    # Load model
+    model = load_model(input_dir  + '/model.h5')
+    
+    # Prediction
+    pred = model.predict(X_test)
+    
+    # Softmax output to categorical
+    y_pred = np.argmax(pred, axis=1, out=None)
+    y_real = np.argmax(y_test, axis=1, out=None)
+    
+    # Show results
+    print('Accuracy score: %f' % accuracy_score(y_real, y_pred))
+    print('F1 score: %f' % f1_score(y_real, y_pred, average='macro'))
+    plot_confusion_matrix(y_real, y_pred, np.arange(5))
 
-with open(BASE_DIR + '/history.json') as json_file:
-    data = json.load(json_file)
-    loss = np.array(data['loss'])
-    val_loss = np.array(data['val_loss'])
-plotLoss(loss, val_loss)
-#%%
-X_test = np.load(BASE_DIR + '/X_test.npy')
-y_test = np.load(BASE_DIR + '/y_test.npy')
-model = load_model(BASE_DIR  + '/model.h5')
-#%%
-pred = model.predict(X_test)
-#%%
-y_pred = np.argmax(pred, axis=1, out=None)
-y_real = np.argmax(y_test, axis=1, out=None)
-#%%
-print(accuracy_score(y_real, y_pred))
-print(f1_score(y_real, y_pred, average='macro'))
-plot_confusion_matrix(y_real, y_pred, np.arange(5))
+if __name__ == "__main__":
+    main()

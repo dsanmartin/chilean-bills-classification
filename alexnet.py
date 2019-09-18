@@ -1,6 +1,5 @@
 # Import necessary components to build LeNet
 import os
-import cv2
 import json
 import numpy as np
 os.environ["CUDA_VISIBLE_DEVICES"]="-1" 
@@ -12,140 +11,111 @@ from keras.layers.convolutional import Conv2D, MaxPooling2D, ZeroPadding2D
 from keras.layers.normalization import BatchNormalization
 from keras.regularizers import l2
 from keras.optimizers import SGD
-from datetime import datetime
-import pathlib2 as pathlib
-from preprocessing import createDataset
 from sklearn.model_selection import train_test_split
-#%%
-folder = datetime.today().strftime('%Y%m%d%H%M%S')
-DIR_BASE = "data/"
-DIR_IN = DIR_BASE + "input/"
-DIR_OUT = DIR_BASE + "output/experiments/" + folder + "/" 
 
-pathlib.Path(DIR_OUT).mkdir(parents=True, exist_ok=True)
-pathlib.Path(DIR_IN + 'arrays/' + folder + '/').mkdir(parents=True, exist_ok=True)
+SEED = 666
 
-# Define canvas size 
-WIDTH = 150
-HEIGHT = 150
+def dataPre(X, y, test_size=0.33, path=None):
+    X_tr, X_test, y_tr, y_test = train_test_split(X, y, test_size=test_size, random_state=SEED, stratify=y)
+    X_train, X_val, y_train, y_val = train_test_split(X_tr, y_tr, test_size=test_size, random_state=SEED, stratify=y_tr)
+    y_train = np_utils.to_categorical(y_train)
+    y_test = np_utils.to_categorical(y_test)
+    y_val = np_utils.to_categorical(y_val)
+    
+    if path is not None:
+        np.save(path + 'X_test', X_test)
+        np.save(path + 'y_test', y_test)
+    
+        return X_train, y_train, X_val, y_val
+    
+    else:
+        return X_train, y_train, X_val, y_val, X_test, y_test
+        
 
-# CV color option
-READ_COLOR = 1
-TRAN_COLOR = cv2.COLOR_BGR2RGB # cv2.COLOR_BGR2GRAY
+class Alexnet:
+    
+    def __init__(self, input_shape, output_dir, n_classes=5, l2_reg=0., weights=None):
+        self.input_shape = input_shape
+        self.output_dir = output_dir
+        self.n_classes = n_classes
+        self.l2_reg = l2_reg
+        self.weights = weights
+        self.model = self.createModel()
+        
+    
+    def createModel(self):
+    
+    	# Initialize model
+    	alexnet = Sequential()
+    
+    	# Layer 1
+    	alexnet.add(Conv2D(96, (11, 11), input_shape=self.input_shape,
+    		padding='same', kernel_regularizer=l2(self.l2_reg)))
+    	alexnet.add(BatchNormalization())
+    	alexnet.add(Activation('relu'))
+    	alexnet.add(MaxPooling2D(pool_size=(2, 2)))
+    
+    	# Layer 2
+    	alexnet.add(Conv2D(256, (5, 5), padding='same'))
+    	alexnet.add(BatchNormalization())
+    	alexnet.add(Activation('relu'))
+    	alexnet.add(MaxPooling2D(pool_size=(2, 2)))
+    
+    	# Layer 3
+    	alexnet.add(ZeroPadding2D((1, 1)))
+    	alexnet.add(Conv2D(512, (3, 3), padding='same'))
+    	alexnet.add(BatchNormalization())
+    	alexnet.add(Activation('relu'))
+    	alexnet.add(MaxPooling2D(pool_size=(2, 2)))
+    
+    #	# Layer 4
+    	alexnet.add(ZeroPadding2D((1, 1)))
+    	alexnet.add(Conv2D(1024, (3, 3), padding='same'))
+    	alexnet.add(BatchNormalization())
+    	alexnet.add(Activation('relu'))
+    #
+    #	# Layer 5
+    #	alexnet.add(ZeroPadding2D((1, 1)))
+    #	alexnet.add(Conv2D(1024, (3, 3), padding='same'))
+    #	alexnet.add(BatchNormalization())
+    #	alexnet.add(Activation('relu'))
+    #	alexnet.add(MaxPooling2D(pool_size=(2, 2)))
+    
+    	# Layer 6
+    	alexnet.add(Flatten())
+    	alexnet.add(Dense(32))#(3072))
+    	alexnet.add(BatchNormalization())
+    	alexnet.add(Activation('relu'))
+    	alexnet.add(Dropout(0.5))
+    
+    	# Layer 7
+    	alexnet.add(Dense(64))#(4096))
+    	alexnet.add(BatchNormalization())
+    	alexnet.add(Activation('relu'))
+    	alexnet.add(Dropout(0.5))
+    
+    	# Layer 8
+    	alexnet.add(Dense(self.n_classes))
+    	alexnet.add(BatchNormalization())
+    	alexnet.add(Activation('softmax'))
+    
+    	if self.weights is not None:
+    		alexnet.load_weights(self.weights)
+    
+    	return alexnet
 
-seed = 666
-#%%
-def alexnet_model(img_shape=(HEIGHT, WIDTH, 1), n_classes=5, l2_reg=0.,
-	weights=None):
 
-	# Initialize model
-	alexnet = Sequential()
+    def compile(self, lr=.5):
+        sgd = SGD(lr=lr)
+        self.model.compile(optimizer=sgd, loss=losses.categorical_crossentropy)
+    
+    def fit(self, X_train, y_train, X_val, y_val, epochs=1, batch_size=1, verbose=1):
+        hist = self.model.fit(X_train, y_train, epochs=epochs, batch_size=batch_size, verbose=verbose, 
+                     validation_data=(X_val, y_val))
+        self.model.save(self.output_dir + 'model.h5')
+        json.dump(hist.history, open(self.output_dir + 'history.json', 'w'))
+    
+    
 
-	# Layer 1
-	alexnet.add(Conv2D(96, (11, 11), input_shape=img_shape,
-		padding='same', kernel_regularizer=l2(l2_reg)))
-	alexnet.add(BatchNormalization())
-	alexnet.add(Activation('relu'))
-	alexnet.add(MaxPooling2D(pool_size=(2, 2)))
 
-	# Layer 2
-	alexnet.add(Conv2D(256, (5, 5), padding='same'))
-	alexnet.add(BatchNormalization())
-	alexnet.add(Activation('relu'))
-	alexnet.add(MaxPooling2D(pool_size=(2, 2)))
 
-	# Layer 3
-	alexnet.add(ZeroPadding2D((1, 1)))
-	alexnet.add(Conv2D(512, (3, 3), padding='same'))
-	alexnet.add(BatchNormalization())
-	alexnet.add(Activation('relu'))
-	alexnet.add(MaxPooling2D(pool_size=(2, 2)))
-
-#	# Layer 4
-	alexnet.add(ZeroPadding2D((1, 1)))
-	alexnet.add(Conv2D(1024, (3, 3), padding='same'))
-	alexnet.add(BatchNormalization())
-	alexnet.add(Activation('relu'))
-#
-#	# Layer 5
-#	alexnet.add(ZeroPadding2D((1, 1)))
-#	alexnet.add(Conv2D(1024, (3, 3), padding='same'))
-#	alexnet.add(BatchNormalization())
-#	alexnet.add(Activation('relu'))
-#	alexnet.add(MaxPooling2D(pool_size=(2, 2)))
-
-	# Layer 6
-	alexnet.add(Flatten())
-	alexnet.add(Dense(32))#(3072))
-	alexnet.add(BatchNormalization())
-	alexnet.add(Activation('relu'))
-	alexnet.add(Dropout(0.5))
-
-	# Layer 7
-	alexnet.add(Dense(64))#(4096))
-	alexnet.add(BatchNormalization())
-	alexnet.add(Activation('relu'))
-	alexnet.add(Dropout(0.5))
-
-	# Layer 8
-	alexnet.add(Dense(n_classes))
-	alexnet.add(BatchNormalization())
-	alexnet.add(Activation('softmax'))
-
-	if weights is not None:
-		alexnet.load_weights(weights)
-
-	return alexnet
-
-#%% LOAD DATA
-a1k = cv2.cvtColor(cv2.imread(DIR_IN + "bills/1000/anverso.jpg", READ_COLOR), TRAN_COLOR)
-a2k = cv2.cvtColor(cv2.imread(DIR_IN + "bills/2000/anverso.jpg", READ_COLOR), TRAN_COLOR)
-a5k = cv2.cvtColor(cv2.imread(DIR_IN + "bills/5000/anverso.jpg", READ_COLOR), TRAN_COLOR)
-a10k = cv2.cvtColor(cv2.imread(DIR_IN + "bills/10000/anverso.jpg", READ_COLOR), TRAN_COLOR)
-a20k = cv2.cvtColor(cv2.imread(DIR_IN + "bills/20000/anverso.jpg", READ_COLOR), TRAN_COLOR)
-
-r1k = cv2.cvtColor(cv2.imread(DIR_IN + "bills/1000/reverso.jpg", READ_COLOR), TRAN_COLOR)
-r2k = cv2.cvtColor(cv2.imread(DIR_IN + "bills/2000/reverso.jpg", READ_COLOR), TRAN_COLOR)
-r5k = cv2.cvtColor(cv2.imread(DIR_IN + "bills/5000/reverso.jpg", READ_COLOR), TRAN_COLOR)
-r10k = cv2.cvtColor(cv2.imread(DIR_IN + "bills/10000/reverso.jpg", READ_COLOR), TRAN_COLOR)
-r20k = cv2.cvtColor(cv2.imread(DIR_IN + "bills/20000/reverso.jpg", READ_COLOR), TRAN_COLOR)
-#%%
-pa = [.5] * 5 # Proporcion Anversos
-th = [0.5] * 5 # Umbrales
-bc = [5] * 5 # Numero de billetes por clase
-data_anv = [a1k, a2k, a5k, a10k, a20k]
-data_rev = [r1k, r2k, r5k, r10k, r20k]
-X, y = createDataset(data_anv, data_rev, pa, th, bc, HEIGHT, WIDTH)
-np.save(DIR_IN + 'arrays/' + folder + '/X', X)
-np.save(DIR_IN + 'arrays/' + folder + '/y', y)
-#X = np.load('data/input/X.npy')
-#y = np.load('data/input/y.npy')
-#%%
-X_tr, X_test, y_tr, y_test = train_test_split(X, y, test_size=0.33, random_state=seed, stratify=y)
-X_train, X_val, y_train, y_val = train_test_split(X_tr, y_tr, test_size=0.33, random_state=seed, stratify=y_tr)
-#%%
-y_train = np_utils.to_categorical(y_train)
-y_test = np_utils.to_categorical(y_test)
-y_val = np_utils.to_categorical(y_val)
-#%%
-#Model and X and y test directory
-
-np.save(DIR_OUT + 'X_test', X_test)
-np.save(DIR_OUT + 'y_test', y_test)
-#%%
-del X, data_anv, data_rev, a1k, a2k, a5k, a10k, a20k, r1k, r2k, r5k, r10k, r20k
-#%%
-lr_ = .5
-epochs_ = 1
-batch_size_ = 10
-sgd = SGD(lr=lr_)
-alexnet = alexnet_model(img_shape=X_train[0].shape)
-alexnet.compile(optimizer=sgd, loss=losses.categorical_crossentropy)
-#%%
-hist = alexnet.fit(X_train, y_train, epochs=epochs_, batch_size=batch_size_, verbose=1, 
-                 validation_data=(X_val, y_val))
-#%%
-alexnet.save(DIR_OUT + 'model.h5')
-#%%
-json.dump(hist.history, open(DIR_OUT + 'history.json', 'w'))
-print(folder)
