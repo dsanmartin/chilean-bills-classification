@@ -1,11 +1,15 @@
 import argparse
-import pathlib2 as pathlib
+import sys
 import numpy as np
 from datetime import datetime
 from alexnet import Alexnet, dataPre
 
+if (sys.version_info > (3, 0)):
+    import pathlib
+else:
+    import pathlib2 as pathlib
+
 DIR_BASE = "data/"
-#DIR_IN = DIR_BASE + "input/arrays/"
 DIR_OUT = DIR_BASE + "output/experiments/"
 
 def main():
@@ -14,7 +18,7 @@ def main():
     parser.add_argument('--dir', '-d', help="Input directory.", type=str, required=True) 
     args = parser.parse_args()
         
-    input_dir = args.path
+    input_dir = args.dir
     
     # Experiment ID
     folder = datetime.today().strftime('%Y%m%d%H%M%S')

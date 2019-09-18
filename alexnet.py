@@ -2,7 +2,7 @@
 import os
 import json
 import numpy as np
-os.environ["CUDA_VISIBLE_DEVICES"]="-1" 
+#os.environ["CUDA_VISIBLE_DEVICES"]="-1" 
 from keras import losses
 from keras.models import Sequential
 from keras.utils import np_utils
