@@ -59,7 +59,7 @@ def main():
     
     eva = model.evaluate(X_test, y_test)
     
-    model.saveParameters({ 'id': folder, 'lr': LR, 'mom': MOM, 'dec': DEC, 'nes': NES, 'epochs': EPOCHS, 'batch': BATCH })
+    model.saveParameters({ 'id': folder, 'input_dir': input_dir, 'lr': LR, 'mom': MOM, 'dec': DEC, 'nes': NES, 'epochs': EPOCHS, 'batch': BATCH })
     
     print(folder)
     
