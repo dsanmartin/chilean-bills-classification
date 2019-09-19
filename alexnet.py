@@ -123,8 +123,11 @@ class Alexnet:
         else:
             return self.model.summary()
     
-    def save(self):
-        self.model.save(self.output_dir + 'model.h5')
+    def save(self, only_weights=True):
+        if only_weights:
+            self.model.save_weights('model_weights.h5')
+        else:
+            self.model.save(self.output_dir + 'model.h5')
         
     def saveParameters(self, params):
         json.dump(params, open(self.output_dir + 'parameters.json', 'w'))
