@@ -247,8 +247,9 @@ def createDataset(data_anv, data_rev, prop_anv, threshold, bills_per_class, heig
     return X, y
 
 def saveDataset(X, y, path):
-    np.save(path + 'X', X)
-    np.save(path + 'y', y)
+    np.savez_compressed(path + 'data', X=X, y=y)
+    #np.save(path + 'X', X)
+    #np.save(path + 'y', y)
     
 def loadBills(bills, path, ext, color):
     data_anv = list()

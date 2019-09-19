@@ -21,8 +21,8 @@ DEC = 0.0
 NES = False
 
 # Fit default parameters #
-EPOCHS = 100
-BATCH = 10
+EPOCHS = 3#100
+BATCH = 1#0
 VERBOSE = 1
 
 def main():
@@ -41,8 +41,9 @@ def main():
     pathlib.Path(output_dir).mkdir(parents=True, exist_ok=True)
     
     # Load dataset
-    X = np.load(input_dir + 'X.npy')
-    y = np.load(input_dir + 'y.npy')
+    data = np.load(input_dir + 'data.npz')
+    X = data['X']
+    y = data['y']
     
     Xr = rescale(X)
     
@@ -50,9 +51,17 @@ def main():
     model = Alexnet(X[0].shape, output_dir)
     model.compile(LR, MOM, DEC, NES)
     
-    X_train, y_train, X_val, y_val = dataSplit(Xr, y, path=output_dir)
+    X_train, y_train, X_val, y_val, X_test, y_test = dataSplit(Xr, y, path=output_dir)
     
-    model.fit(X_train, y_train, X_val, y_val, EPOCHS, BATCH, VERBOSE)
+    hist = model.fit(X_train, y_train, X_val, y_val, EPOCHS, BATCH, VERBOSE)
+    
+    y_pred = model.predict(X_test)
+    
+    eva = model.evaluate(X_test, y_test)
+    
+    model.save()
+    
+    model.saveParameters({ 'id': folder, 'lr': LR, 'mom': MOM, 'dec': DEC, 'nes': NES, 'epochs': EPOCHS, 'batch': BATCH })
     
     print(folder)
 

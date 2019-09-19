@@ -1,27 +1,49 @@
-import os
+#import os
 #os.environ["CUDA_VISIBLE_DEVICES"]="-1"
 import json
 import argparse
 import numpy as np
 import matplotlib.pyplot as plt
-from keras.models import load_model
-from sklearn.metrics import accuracy_score, f1_score, confusion_matrix
+#from keras.models import load_model
+from sklearn.metrics import confusion_matrix #accuracy_score, f1_score,
+from sklearn.metrics import classification_report
 from sklearn.utils.multiclass import unique_labels
 
-def plotLoss(loss, val_loss):
+def plotAcc(acc, val_acc, path=None):
+    fig = plt.figure()
+    plt.plot(np.arange(len(acc)), acc, 'b-*', label='Acc')
+    plt.plot(np.arange(len(val_acc)), val_acc, 'r-x', label='Val Acc')
+    plt.xlabel('Epochs')
+    plt.ylabel('Accuracy')
+    plt.grid(True)
+    plt.legend()
+    if path is None: 
+        plt.show()
+    else: 
+        plt.savefig(path + 'acc_plot.png')
+        plt.close(fig)
+    return None
+
+def plotLoss(loss, val_loss, path=None):
+    fig = plt.figure()
     plt.plot(np.arange(len(loss)), loss, 'b-*', label='Loss')
     plt.plot(np.arange(len(val_loss)), val_loss, 'r-x', label='Val Loss')
     plt.xlabel('Epochs')
     plt.ylabel('Loss')
     plt.grid(True)
     plt.legend()
-    plt.show()
+    if path is None: 
+        plt.show()
+    else: 
+        plt.savefig(path + 'loss_plot.png')
+        plt.close(fig)
     return None
 
 def plot_confusion_matrix(y_true, y_pred, classes,
                           normalize=False,
                           title=None,
-                          cmap=plt.cm.Blues):
+                          cmap=plt.cm.Blues,
+                          path=None):
     """
     This function prints and plots the confusion matrix.
     Normalization can be applied by setting `normalize=True`.
@@ -41,10 +63,14 @@ def plot_confusion_matrix(y_true, y_pred, classes,
         print("Normalized confusion matrix")
     else:
         print('Confusion matrix, without normalization')
-
+    
+    if path is not None:
+        np.save(path + 'cm.npy', cm)
     print(cm)
-
-    fig, ax = plt.subplots()
+    
+    fig = plt.figure()
+    #fig, ax = plt.subplots()
+    ax = fig.add_subplot(1,1,1)
     im = ax.imshow(cm, interpolation='nearest', cmap=cmap)
     ax.figure.colorbar(im, ax=ax)
     # We want to show all ticks...
@@ -68,9 +94,13 @@ def plot_confusion_matrix(y_true, y_pred, classes,
             ax.text(j, i, format(cm[i, j], fmt),
                     ha="center", va="center",
                     color="white" if cm[i, j] > thresh else "black")
-    fig.tight_layout()
-    plt.show() 
-    return ax
+    #fig.tight_layout()
+    if path is None: 
+        plt.show()
+    else: 
+        plt.savefig(path + 'confusion_matrix.png')
+        plt.close(fig)
+    return None
 
 def main():
     
@@ -80,31 +110,48 @@ def main():
         
     input_dir = args.dir
     
+    print("Loading history...")
+    
     # Show loss function
-    with open(input_dir + '/history.json') as json_file:
+    with open(input_dir + 'history.json') as json_file:
         data = json.load(json_file)
         loss = np.array(data['loss'])
         val_loss = np.array(data['val_loss'])
-    plotLoss(loss, val_loss)
+        acc = np.array(data['acc'])
+        val_acc = np.array(data['val_acc'])
+        
+    plotLoss(loss, val_loss, input_dir)
+    plotAcc(acc, val_acc, input_dir)
     
+    
+    print("Loading testing data...")
     # Load test data
-    X_test = np.load(input_dir + '/X_test.npy')
-    y_test = np.load(input_dir + '/y_test.npy')
+    test = np.load(input_dir + 'test.npz')
+    #X_test = test['X']
+    y_test = test['y']
     
     # Load model
-    model = load_model(input_dir  + '/model.h5')
+    #model = load_model(input_dir  + 'model.h5')
     
+    print("Loading predition...")
     # Prediction
-    pred = model.predict(X_test)
+    #pred = model.predict(X_test)
+    pred = np.load(input_dir + 'prediction.npz')
     
     # Softmax output to categorical
-    y_pred = np.argmax(pred, axis=1, out=None)
+    y_pred = np.argmax(pred['y_pred'], axis=1, out=None)
     y_real = np.argmax(y_test, axis=1, out=None)
     
+    print("Evaluation")
     # Show results
-    print('Accuracy score: %f' % accuracy_score(y_real, y_pred))
-    print('F1 score: %f' % f1_score(y_real, y_pred, average='macro'))
-    plot_confusion_matrix(y_real, y_pred, np.arange(5))
+    #print('Accuracy score: %f' % accuracy_score(y_real, y_pred))
+    #print('F1 score: %f' % f1_score(y_real, y_pred, average='macro'))
+    names_ = ['1000', '2000', '5000', '10000', '20000']
+    
+    report = classification_report(y_real, y_pred, target_names=names_, digits=6, output_dict=True)
+    json.dump(report, open(input_dir + 'class_report.json', 'w'))
+    print(classification_report(y_real, y_pred, target_names=names_, digits=6))
+    plot_confusion_matrix(y_real, y_pred, np.arange(5), path=input_dir)
 
 if __name__ == "__main__":
     main()

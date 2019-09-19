@@ -42,7 +42,7 @@ def main():
     # Create dataset
     pa = [.5] * 5 # Number of heads
     th = [.1] * 5 # Threshold
-    bc = [5] * 5 # Number of bills per class
+    bc = [10] * 5 # Number of bills per class
     X, y = createDataset(data_anv, data_rev, pa, th, bc, args.height, args.width, args.color)
     
     # Save
@@ -63,3 +63,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+#%%

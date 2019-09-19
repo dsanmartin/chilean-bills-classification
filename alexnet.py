@@ -1,7 +1,8 @@
 import json
+import numpy as np
 #import os
 #os.environ["CUDA_VISIBLE_DEVICES"]="-1" 
-from keras import losses
+from keras import losses, metrics
 from keras.models import Sequential
 from keras.layers.core import Dense, Dropout, Activation, Flatten
 from keras.layers.convolutional import Conv2D, MaxPooling2D, ZeroPadding2D
@@ -60,13 +61,13 @@ class Alexnet:
     
     	# Layer 6
     	alexnet.add(Flatten())
-    	alexnet.add(Dense(3072))#(32))
+    	alexnet.add(Dense(32))#3072))#(32))
     	alexnet.add(BatchNormalization())
     	alexnet.add(Activation('relu'))
     	alexnet.add(Dropout(0.5))
     
     	# Layer 7
-    	alexnet.add(Dense(4096))#(64))
+    	alexnet.add(Dense(64))#4096))#(64))
     	alexnet.add(BatchNormalization())
     	alexnet.add(Activation('relu'))
     	alexnet.add(Dropout(0.5))
@@ -84,10 +85,48 @@ class Alexnet:
 
     def compile(self, lr=0.1, momentum=0.0, decay=0.0, nesterov=False):
         sgd = SGD(lr=lr, momentum=momentum, decay=decay, nesterov=nesterov)
-        self.model.compile(optimizer=sgd, loss=losses.categorical_crossentropy)
+        self.model.compile(optimizer=sgd, 
+                           loss=losses.categorical_crossentropy,
+                           metrics=['accuracy', metrics.categorical_accuracy])
     
-    def fit(self, X_train, y_train, X_val, y_val, epochs=10, batch_size=10, verbose=1):
-        hist = self.model.fit(X_train, y_train, epochs=epochs, batch_size=batch_size, verbose=verbose, 
-                     validation_data=(X_val, y_val))
+    def fit(self, X_train, y_train, X_val, y_val, epochs=10, batch_size=10, verbose=1, save=True):
+        hist = self.model.fit(X_train, y_train, epochs=epochs, 
+                              batch_size=batch_size, verbose=verbose, 
+                              validation_data=(X_val, y_val))
+        if save:
+            json.dump(hist.history, open(self.output_dir + 'history.json', 'w'))
+            
+        return hist
+        
+    def predict(self, X, save=True):
+        pred = self.model.predict(X)
+        if save: 
+            np.savez_compressed(self.output_dir + 'prediction', y_pred=pred)
+        return pred
+    
+    def evaluate(self, X, y, save=True):
+        eva = self.model.evaluate(X, y)
+        if save:
+            out = {
+                'test_loss': eva[0],
+                'test_acc': eva[1],
+                'test_cat_acc': eva[2]
+            }
+            json.dump(out, open(self.output_dir + 'evaluation.json', 'w'))
+            
+        return eva
+        
+    def summary(self, save=False):
+        if save:
+            with open(self.output_dir + 'summary.txt','w') as fh:
+                self.model.summary(print_fn=lambda x: fh.write(x + '\n'))
+        else:
+            return self.model.summary()
+    
+    def save(self):
         self.model.save(self.output_dir + 'model.h5')
-        json.dump(hist.history, open(self.output_dir + 'history.json', 'w'))
+        
+    def saveParameters(self, params):
+        json.dump(params, open(self.output_dir + 'parameters.json', 'w'))
+        
+        
