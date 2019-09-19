@@ -125,7 +125,7 @@ class Alexnet:
     
     def save(self, only_weights=True):
         if only_weights:
-            self.model.save_weights('model_weights.h5')
+            self.model.save_weights(self.output_dir + 'model_weights.h5')
         else:
             self.model.save(self.output_dir + 'model.h5')
         
