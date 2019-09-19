@@ -22,7 +22,7 @@ NES = False
 
 # Fit default parameters #
 EPOCHS = 100
-BATCH = 10
+BATCH = 50
 VERBOSE = 1
 
 def main():
