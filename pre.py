@@ -1,7 +1,12 @@
+import sys
 import argparse
-import pathlib2 as pathlib
 from datetime import datetime
-from preprocessing import loadBills, createDataset, saveDataset
+from dataset import loadBills, createDataset, saveDataset
+
+if (sys.version_info > (3, 0)):
+    import pathlib
+else:
+    import pathlib2 as pathlib
 
 # Data directory
 DIR_BASE = "data/input/"
@@ -15,7 +20,7 @@ WIDTH = 150
 HEIGHT = 150
 
 # CV color option
-COLOR = 1
+COLOR = 0
 
 BILLS = ['1000', '2000', '5000', '10000', '20000']
 
@@ -29,7 +34,7 @@ def main():
     
     folder = datetime.today().strftime('%Y%m%d%H%M%S')
     output = ARRAY_DIR + folder + '/'
-    #pathlib.Path(output).mkdir(parents=True, exist_ok=True)
+    pathlib.Path(output).mkdir(parents=True, exist_ok=True)
     
     # Load bills
     data_anv, data_rev = loadBills(BILLS, BILLS_DIR, EXT, args.color)
@@ -37,7 +42,7 @@ def main():
     # Create dataset
     pa = [.5] * 5 # Number of heads
     th = [.1] * 5 # Threshold
-    bc = [1000] * 5 # Number of bills per class
+    bc = [5] * 5 # Number of bills per class
     X, y = createDataset(data_anv, data_rev, pa, th, bc, args.height, args.width, args.color)
     
     # Save
@@ -58,14 +63,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    
-#%%
-#import numpy as np
-#import matplotlib.pyplot as plt
-#
-#X = np.load('data/input/arrays/20190918182100/X.npy')
-#
-#print(X.shape)
-#for i in range(len(X)):
-#    plt.imshow(X[i])
-#    plt.show()

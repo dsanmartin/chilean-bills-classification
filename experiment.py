@@ -2,15 +2,28 @@ import argparse
 import sys
 import numpy as np
 from datetime import datetime
-from alexnet import Alexnet, dataPre
+from alexnet import Alexnet
+from preprocessing import rescale, dataSplit
 
 if (sys.version_info > (3, 0)):
     import pathlib
 else:
     import pathlib2 as pathlib
 
+# Folders ##
 DIR_BASE = "data/"
 DIR_OUT = DIR_BASE + "output/experiments/"
+
+# Default SGD parameters #
+LR = 0.1
+MOM = 0.0
+DEC = 0.0
+NES = False
+
+# Fit default parameters #
+EPOCHS = 100
+BATCH = 10
+VERBOSE = 1
 
 def main():
     
@@ -31,17 +44,18 @@ def main():
     X = np.load(input_dir + 'X.npy')
     y = np.load(input_dir + 'y.npy')
     
+    Xr = rescale(X)
+    
     # Model
     model = Alexnet(X[0].shape, output_dir)
-    model.compile()
+    model.compile(LR, MOM, DEC, NES)
     
-    X_train, y_train, X_val, y_val = dataPre(X, y, path=output_dir)
+    X_train, y_train, X_val, y_val = dataSplit(Xr, y, path=output_dir)
     
-    model.fit(X_train, y_train, X_val, y_val)
+    model.fit(X_train, y_train, X_val, y_val, EPOCHS, BATCH, VERBOSE)
     
     print(folder)
 
 if __name__ == "__main__":
     main()
     
-
