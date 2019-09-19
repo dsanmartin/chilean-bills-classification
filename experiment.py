@@ -21,8 +21,8 @@ DEC = 0.0
 NES = False
 
 # Fit default parameters #
-EPOCHS = 3#100
-BATCH = 1#0
+EPOCHS = 100
+BATCH = 10
 VERBOSE = 1
 
 def main():
@@ -59,11 +59,11 @@ def main():
     
     eva = model.evaluate(X_test, y_test)
     
-    model.save()
-    
     model.saveParameters({ 'id': folder, 'lr': LR, 'mom': MOM, 'dec': DEC, 'nes': NES, 'epochs': EPOCHS, 'batch': BATCH })
     
     print(folder)
+    
+    model.save()
 
 if __name__ == "__main__":
     main()
