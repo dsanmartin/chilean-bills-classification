@@ -61,13 +61,13 @@ class Alexnet:
     
     	# Layer 6
     	alexnet.add(Flatten())
-    	alexnet.add(Dense(32))#3072))#(32))
+    	alexnet.add(Dense(3072))
     	alexnet.add(BatchNormalization())
     	alexnet.add(Activation('relu'))
     	alexnet.add(Dropout(0.5))
     
     	# Layer 7
-    	alexnet.add(Dense(64))#4096))#(64))
+    	alexnet.add(Dense(4096))
     	alexnet.add(BatchNormalization())
     	alexnet.add(Activation('relu'))
     	alexnet.add(Dropout(0.5))
