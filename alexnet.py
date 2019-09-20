@@ -12,62 +12,62 @@ from keras.optimizers import SGD
 
 class Alexnet:
     
-    def __init__(self, input_shape, output_dir, n_classes=5, l2_reg=0., weights=None):
+    def __init__(self, input_shape, output_dir, neurons, n_classes=5, l2_reg=0., weights=None):
         self.input_shape = input_shape
         self.output_dir = output_dir
         self.n_classes = n_classes
         self.l2_reg = l2_reg
         self.weights = weights
-        self.model = self.createModel()
+        self.model = self.createModel(neurons)
         
     
-    def createModel(self):
+    def createModel(self, neurons):
     
     	# Initialize model
     	alexnet = Sequential()
     
     	# Layer 1
-    	alexnet.add(Conv2D(96, (11, 11), input_shape=self.input_shape,
+    	alexnet.add(Conv2D(neurons[0], (11, 11), input_shape=self.input_shape,
     		padding='same', kernel_regularizer=l2(self.l2_reg)))
     	alexnet.add(BatchNormalization())
     	alexnet.add(Activation('relu'))
     	alexnet.add(MaxPooling2D(pool_size=(2, 2)))
     
     	# Layer 2
-    	alexnet.add(Conv2D(256, (5, 5), padding='same'))
+    	alexnet.add(Conv2D(neurons[1], (5, 5), padding='same'))
     	alexnet.add(BatchNormalization())
     	alexnet.add(Activation('relu'))
     	alexnet.add(MaxPooling2D(pool_size=(2, 2)))
     
     	# Layer 3
     	alexnet.add(ZeroPadding2D((1, 1)))
-    	alexnet.add(Conv2D(512, (3, 3), padding='same'))
+    	alexnet.add(Conv2D(neurons[2], (3, 3), padding='same'))
     	alexnet.add(BatchNormalization())
     	alexnet.add(Activation('relu'))
     	alexnet.add(MaxPooling2D(pool_size=(2, 2)))
     
     	# Layer 4
     	alexnet.add(ZeroPadding2D((1, 1)))
-    	alexnet.add(Conv2D(1024, (3, 3), padding='same'))
+    	alexnet.add(Conv2D(neurons[3], (3, 3), padding='same'))
     	alexnet.add(BatchNormalization())
     	alexnet.add(Activation('relu'))
     
     	# Layer 5
     	alexnet.add(ZeroPadding2D((1, 1)))
-    	alexnet.add(Conv2D(1024, (3, 3), padding='same'))
+    	alexnet.add(Conv2D(neurons[4], (3, 3), padding='same'))
     	alexnet.add(BatchNormalization())
     	alexnet.add(Activation('relu'))
     	alexnet.add(MaxPooling2D(pool_size=(2, 2)))
     
     	# Layer 6
     	alexnet.add(Flatten())
-    	alexnet.add(Dense(3072))
+    	alexnet.add(Dense(neurons[5]))
     	alexnet.add(BatchNormalization())
     	alexnet.add(Activation('relu'))
     	alexnet.add(Dropout(0.5))
     
     	# Layer 7
-    	alexnet.add(Dense(4096))
+    	alexnet.add(Dense(neurons[6]))
     	alexnet.add(BatchNormalization())
     	alexnet.add(Activation('relu'))
     	alexnet.add(Dropout(0.5))

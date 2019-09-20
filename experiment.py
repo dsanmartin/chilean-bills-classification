@@ -10,7 +10,7 @@ if (sys.version_info > (3, 0)):
 else:
     import pathlib2 as pathlib
 
-# Folders ##
+# Folders #
 DIR_BASE = "data/"
 DIR_OUT = DIR_BASE + "output/experiments/"
 
@@ -24,6 +24,10 @@ NES = False
 EPOCHS = 100
 BATCH = 50
 VERBOSE = 1
+
+# Default number of neurons per layer #
+#NEURONS = [96, 256, 512, 1024, 1024, 3072, 4096] # Original model
+NEURONS = [32, 64, 128, 256, 256, 512, 32] # Our model
 
 def main():
     
@@ -48,7 +52,7 @@ def main():
     Xr = rescale(X)
     
     # Model
-    model = Alexnet(X[0].shape, output_dir)
+    model = Alexnet(X[0].shape, output_dir, NEURONS)
     model.compile(LR, MOM, DEC, NES)
     
     X_train, y_train, X_val, y_val, X_test, y_test = dataSplit(Xr, y, path=output_dir)
@@ -59,7 +63,7 @@ def main():
     
     eva = model.evaluate(X_test, y_test)
     
-    model.saveParameters({ 'id': folder, 'input_dir': input_dir, 'lr': LR, 'mom': MOM, 'dec': DEC, 'nes': NES, 'epochs': EPOCHS, 'batch': BATCH })
+    model.saveParameters({ 'id': folder, 'input_dir': input_dir, 'neurons': NEURONS, 'lr': LR, 'mom': MOM, 'dec': DEC, 'nes': NES, 'epochs': EPOCHS, 'batch': BATCH })
     
     print(folder)
     
