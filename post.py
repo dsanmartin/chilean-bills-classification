@@ -65,7 +65,8 @@ def plot_confusion_matrix(y_true, y_pred, classes,
         print('Confusion matrix, without normalization')
     
     if path is not None:
-        np.save(path + 'cm.npy', cm)
+        #np.save(path + 'cm.npy', cm)
+        np.savetxt(path + 'cm.txt', cm, delimiter=',', fmt='%d')
     print(cm)
     
     fig = plt.figure()
