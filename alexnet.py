@@ -10,6 +10,7 @@ from keras.layers.normalization import BatchNormalization
 from keras.regularizers import l2
 from keras.optimizers import SGD
 
+# Based on https://github.com/eweill/keras-deepcv/blob/master/models/classification/alexnet.py
 class Alexnet:
     
     def __init__(self, input_shape, output_dir, neurons, n_classes=5, l2_reg=0., weights=None):
